@@ -13,18 +13,22 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+       
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'phone' => 'required|string|unique:users,phone|regex:/^09[0-9]{9}$/', // شماره تماس یونیک
             'username' => 'required|string|unique:users,username|min:6|regex:/^[A-Za-z0-9]+$/',
             'national_id' => 'nullable|string|unique:users,national_id|min:10|max:10', // شماره ملی یونیک
-            'password' => 'required|string|min:8|regex:/[a-z]/|regex:/[A-Z]/|regex:/[0-9]/',
+            'password'=>  'required|string|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/|min:8',
+        ],[
+            'password.regex' => 'نام کاربری باید شامل حروف کوچک و بزرگ انگلیسی و حداقل یک نماد باشد است.',
+    
         ]);
     
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
-    
+        // dd($request->all());
         $user = User::create([
             'name' => $request->name,
             'phone' => $request->phone,
@@ -34,7 +38,6 @@ class AuthController extends Controller
         ]);
     
         $token = JWTAuth::fromUser($user);
-    
         return response()->json(['token' => $token]);
     }
 
@@ -67,9 +70,11 @@ class AuthController extends Controller
         // ایجاد توکن
         $token = JWTAuth::fromUser($user);
 
-        return response()->json([
+        return response()->json(['data'=>[
             'message' => 'ورود موفقیت‌آمیز بود',
+            'user'=>$user,
             'token' => $token,
+        ]
         ]);
     }
 }
